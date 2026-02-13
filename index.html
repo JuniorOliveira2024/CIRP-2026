@@ -1616,7 +1616,7 @@
                         <label for="taskResponsible">Responsável *</label>
                         <select id="taskResponsible" required>
                             <option value="">Selecione o responsável</option>
-                            <option value="Capitão Lavinio Lopes">CIRP</option>
+                            <option value="CIRP">CIRP</option>
                             <option value="Comando FACV">Comando FACV</option>
                         </select>
                     </div>
@@ -1737,7 +1737,6 @@
             hideConfirmDialog();
         });
         
-        // Fechar ao clicar fora
         confirmDialog.addEventListener('click', function(e) {
             if (e.target === confirmDialog) {
                 hideConfirmDialog();
@@ -1745,25 +1744,22 @@
         });
         
         // ============================================
-        // SALVAMENTO AUTOMÁTICO E SEGURO
+        // SALVAMENTO AUTOMÁTICO
         // ============================================
         function saveAllData() {
             if (!currentUserId) return;
             
             const userDb = new UserDatabase(currentUserId);
             
-            // Salvar todos os dados
             userDb.saveTasks(tasks);
             userDb.saveComments(comments);
             userDb.saveSubtasks(subtasks);
             userDb.saveNotifications(notifications);
             
-            // Atualizar timestamps
             const settings = userDb.loadUserSettings();
             settings.lastSave = new Date().toISOString();
             userDb.saveUserSettings(settings);
             
-            // Atualizar contadores
             if (dbTasksCount) dbTasksCount.textContent = tasks.length;
             if (document.getElementById('backupTasksCount')) {
                 document.getElementById('backupTasksCount').textContent = tasks.length;
@@ -1847,7 +1843,6 @@
         // INICIALIZAÇÃO
         // ============================================
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar modo escuro salvo
             const savedDarkMode = localStorage.getItem('facv_dark_mode');
             if (savedDarkMode === 'true') {
                 document.body.classList.add('dark-mode');
@@ -1857,7 +1852,6 @@
                 }
             }
             
-            // Verificar se já está logado
             const savedUser = localStorage.getItem('facv_current_user');
             if (savedUser) {
                 try {
@@ -1871,15 +1865,12 @@
                 }
             }
             
-            // Setup event listeners
             setupEventListeners();
             
-            // Solicitar permissão para notificações
             if (Notification.permission === 'default') {
                 Notification.requestPermission();
             }
             
-            // Setup sincronização entre abas
             window.addEventListener('storage', function(e) {
                 if (e.key && e.key.includes('facv_user_')) {
                     loadUserDatabase();
@@ -1887,14 +1878,12 @@
                 }
             });
             
-            // Salvamento automático a cada 30 segundos
             setInterval(() => {
                 if (currentUser) {
                     saveAllData();
                 }
             }, 30000);
             
-            // Salvar dados antes de fechar/recarregar a página
             window.addEventListener('beforeunload', function(e) {
                 if (currentUser) {
                     saveAllData();
@@ -1906,7 +1895,6 @@
         // SETUP EVENT LISTENERS
         // ============================================
         function setupEventListeners() {
-            // Login form
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -1920,19 +1908,16 @@
                     return;
                 }
                 
-                // Validar CIRP
                 if (userId !== 'CIRP2026') {
                     alert('CIRP inválido! Utilize CIRP2026');
                     return;
                 }
                 
-                // Validar ID alfanumérico
                 if (!/^[a-zA-Z0-9]+$/.test(userId)) {
                     alert('O ID deve conter apenas letras e números.');
                     return;
                 }
                 
-                // Criar usuário
                 currentUser = {
                     fullName: fullName,
                     rank: militaryRank,
@@ -1942,13 +1927,10 @@
                 
                 currentUserId = userId;
                 
-                // Inicializar banco de dados
                 loadUserDatabase();
                 
-                // Salvar sessão
                 localStorage.setItem('facv_current_user', JSON.stringify(currentUser));
                 
-                // Dados iniciais para novos usuários
                 if (!UserDatabase.userExists(userId)) {
                     initializeSampleData();
                     const userDb = new UserDatabase(userId);
@@ -1960,25 +1942,20 @@
                     });
                 }
                 
-                // Adicionar notificação
                 addNotification(`✅ ${fullName} (${militaryRank}) acessou o sistema.`);
                 
                 showApp();
                 
-                // Iniciar timer de inatividade
                 startInactivityTimer();
             });
             
-            // Logout com confirmação e salvamento automático
             logoutBtn.addEventListener('click', function() {
                 showConfirmDialog(
                     'Confirmar Saída',
                     'Tem certeza que deseja sair do sistema? Todos os dados já foram salvos automaticamente.',
                     function() {
-                        // Salvar dados antes de sair
                         saveAllData();
                         
-                        // Registrar saída
                         if (currentUser) {
                             addNotification(`👋 ${currentUser.fullName} saiu do sistema.`);
                             
@@ -1988,12 +1965,10 @@
                             userDb.saveUserSettings(settings);
                         }
                         
-                        // Limpar sessão
                         currentUser = null;
                         currentUserId = null;
                         localStorage.removeItem('facv_current_user');
                         
-                        // Voltar para login
                         loginPage.style.display = 'flex';
                         appContainer.style.display = 'none';
                         loginForm.reset();
@@ -2003,34 +1978,26 @@
                 );
             });
             
-            // Navigation - FUNCIONALIDADE PRINCIPAL DA NAVBAR
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     
-                    // Salvar dados antes de mudar de seção
                     saveAllData();
                     
-                    // Remover active de todos os links
                     navLinks.forEach(l => l.classList.remove('active'));
                     
-                    // Adicionar active ao link clicado
                     this.classList.add('active');
                     
-                    // Obter a seção alvo
                     const sectionId = this.getAttribute('data-section') + 'Section';
                     
-                    // Ocultar todas as seções
                     contentSections.forEach(section => {
                         section.classList.remove('active');
                     });
                     
-                    // Mostrar a seção selecionada
                     const targetSection = document.getElementById(sectionId);
                     if (targetSection) {
                         targetSection.classList.add('active');
                         
-                        // Atualizar conteúdo da seção
                         if (sectionId === 'dashboardSection') {
                             updateDashboardStats();
                             loadRecentTasks();
@@ -2046,7 +2013,6 @@
                 });
             });
             
-            // Comment form
             commentForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -2054,23 +2020,20 @@
                 if (content) {
                     addComment(content, null);
                     commentInput.value = '';
-                    saveAllData(); // Salvar imediatamente
+                    saveAllData();
                 }
             });
             
-            // Notification bell
             notificationBell.addEventListener('click', function(e) {
                 e.preventDefault();
                 toggleNotificationPanel();
             });
             
-            // Dark mode toggle
             darkModeToggle.addEventListener('click', function() {
                 toggleDarkMode();
-                saveAllData(); // Salvar preferência
+                saveAllData();
             });
             
-            // Click outside notification panel
             document.addEventListener('click', function(e) {
                 if (!notificationPanel.contains(e.target) && !notificationBell.contains(e.target)) {
                     notificationPanel.style.display = 'none';
@@ -2081,20 +2044,14 @@
                 }
             });
             
-            // Inactivity timer
             ['click', 'mousemove', 'keypress', 'scroll'].forEach(event => {
                 document.addEventListener(event, resetInactivityTimer);
             });
         }
         
         // ============================================
-        // LOGOUT E INATIVIDADE
+        // TIMER DE INATIVIDADE
         // ============================================
-        function logout() {
-            // Este método agora é chamado pelo confirm dialog
-            // O logout real é feito no callback do confirm dialog
-        }
-        
         function startInactivityTimer() {
             if (logoutTimer) clearTimeout(logoutTimer);
             logoutTimer = setTimeout(() => {
@@ -2103,13 +2060,12 @@
                         'Sessão Expirou',
                         'Você ficou inativo por 15 minutos. Deseja permanecer logado?',
                         function() {
-                            // Usuário quer continuar
                             startInactivityTimer();
                             addNotification('⏰ Sessão estendida');
                         }
                     );
                 }
-            }, 15 * 60 * 1000); // 15 minutos
+            }, 15 * 60 * 1000);
         }
 
         function resetInactivityTimer() {
@@ -2139,7 +2095,7 @@
         }
         
         // ============================================
-        // INITIALIZE SAMPLE DATA
+        // DADOS DE EXEMPLO
         // ============================================
         function initializeSampleData() {
             const now = Date.now();
@@ -2189,7 +2145,6 @@
             tasks = sampleTasks;
             saveAllData();
             
-            // Subtarefas de exemplo com progresso automático
             const sampleSubtasks = {};
             sampleTasks.forEach((task, index) => {
                 if (task.id === now + 1) {
@@ -2217,7 +2172,6 @@
             subtasks = sampleSubtasks;
             saveAllData();
             
-            // Comentários de exemplo
             const sampleComments = [
                 {
                     id: Date.now() + 1,
@@ -2233,14 +2187,13 @@
             comments = sampleComments;
             saveAllData();
             
-            // Atualizar progresso das missões baseado nas subtarefas
             updateAllMissionsProgress();
             
             addNotification("📋 Dados iniciais carregados com sucesso!");
         }
         
         // ============================================
-        // PROGRESSO AUTOMÁTICO - CORAÇÃO DO SISTEMA
+        // PROGRESSO AUTOMÁTICO
         // ============================================
         function updateMissionProgress(missionId) {
             const missionSubtasks = subtasks[missionId] || [];
@@ -2251,10 +2204,8 @@
                 
                 const missionIndex = tasks.findIndex(t => t.id == missionId);
                 if (missionIndex !== -1) {
-                    // Atualizar progresso
                     tasks[missionIndex].progress = progress;
                     
-                    // Atualizar status automaticamente baseado no progresso
                     if (progress === 100) {
                         tasks[missionIndex].status = 'completed';
                     } else if (progress > 0) {
@@ -2267,7 +2218,6 @@
                     
                     saveAllData();
                     
-                    // Notificação quando missão for concluída
                     if (progress === 100 && tasks[missionIndex].status === 'completed') {
                         addNotification(`✅ Missão "${tasks[missionIndex].title}" foi concluída com sucesso!`);
                     }
@@ -2302,11 +2252,11 @@
             subtasksList.appendChild(div);
         }
         
-        function removeSubtaskField(subtaskId) {
+        window.removeSubtaskField = function(subtaskId) {
             document.getElementById(subtaskId)?.remove();
-        }
+        };
         
-        function toggleSubtask(missionId, subtaskId, completed) {
+        window.toggleSubtask = function(missionId, subtaskId, completed) {
             const missionSubtasks = subtasks[missionId];
             if (missionSubtasks) {
                 const subtask = missionSubtasks.find(s => s.id == subtaskId);
@@ -2314,18 +2264,16 @@
                     subtask.completed = completed;
                     saveAllData();
                     
-                    // PROGRESSO AUTOMÁTICO - Atualizar missão
                     updateMissionProgress(missionId);
                     
-                    // Atualizar UI
                     loadKanbanBoard();
                     updateDashboardStats();
                 }
             }
-        }
+        };
         
         // ============================================
-        // SAVE MISSION
+        // SALVAR MISSÃO
         // ============================================
         function saveMission(event) {
             event.preventDefault();
@@ -2345,7 +2293,6 @@
                 createdBy: currentUser.userId
             };
             
-            // Coletar subtarefas do formulário
             const subtaskElements = document.querySelectorAll('#subtasksList .subtask-item');
             const missionSubtasks = [];
             
@@ -2362,16 +2309,11 @@
             });
             
             if (!editingTaskId) {
-                // Nova missão
                 taskData.createdAt = new Date().toISOString();
                 tasks.push(taskData);
-                
-                // Salvar subtarefas
                 subtasks[taskId] = missionSubtasks;
-                
                 addNotification(`📋 Nova missão criada: ${taskData.title}`);
             } else {
-                // Atualizar missão existente
                 const taskIndex = tasks.findIndex(t => t.id === editingTaskId);
                 if (taskIndex !== -1) {
                     taskData.createdAt = tasks[taskIndex].createdAt;
@@ -2381,7 +2323,6 @@
                 }
             }
             
-            // Calcular progresso automático
             if (missionSubtasks.length > 0) {
                 const completed = missionSubtasks.filter(s => s.completed).length;
                 taskData.progress = Math.round((completed / missionSubtasks.length) * 100);
@@ -2392,7 +2333,6 @@
             saveAllData();
             closeModal();
             
-            // Atualizar todas as views
             updateUI();
             loadKanbanBoard();
             generateCalendar(currentMonth, currentYear);
@@ -2408,7 +2348,6 @@
             updateProjectSelects();
             checkDueDates();
             
-            // Atualizar contador de backup
             const backupTasksCount = document.getElementById('backupTasksCount');
             if (backupTasksCount) backupTasksCount.textContent = tasks.length;
             
@@ -2428,13 +2367,11 @@
             document.getElementById('inProgressTasks').textContent = inProgressTasks;
             document.getElementById('pendingTasks').textContent = pendingTasks;
             
-            // Progresso geral
             const totalProgress = tasks.reduce((acc, t) => acc + (t.progress || 0), 0);
             const avgProgress = tasks.length ? Math.round(totalProgress / tasks.length) : 0;
             document.getElementById('overallProgress').style.width = avgProgress + '%';
             document.getElementById('progressPercentage').textContent = avgProgress + '%';
             
-            // Meta mensal
             const currentMonth = new Date().getMonth();
             const monthlyTasks = tasks.filter(t => {
                 const taskDate = new Date(t.deadline);
@@ -2526,7 +2463,6 @@
             const formattedDate = deadlineDate.toLocaleDateString('pt-CV');
             const isLate = task.status !== 'completed' && deadlineDate < new Date();
             
-            // Calcular progresso das subtarefas
             const taskSubtasks = subtasks[task.id] || [];
             const completedSubtasks = taskSubtasks.filter(s => s.completed).length;
             const progress = taskSubtasks.length > 0 ? Math.round((completedSubtasks / taskSubtasks.length) * 100) : (task.progress || 0);
@@ -2572,7 +2508,6 @@
             
             let filteredTasks = [...tasks];
             
-            // Aplicar filtros
             const filterPriority = document.getElementById('filterPriority')?.value;
             const filterStatus = document.getElementById('filterStatus')?.value;
             const filterDate = document.getElementById('filterDate')?.value;
@@ -2609,7 +2544,6 @@
             const formattedDate = deadlineDate.toLocaleDateString('pt-CV');
             const isLate = task.status !== 'completed' && deadlineDate < new Date();
             
-            // Calcular progresso das subtarefas - PROGRESSO AUTOMÁTICO
             const taskSubtasks = subtasks[task.id] || [];
             const completedSubtasks = taskSubtasks.filter(s => s.completed).length;
             const progress = taskSubtasks.length > 0 ? Math.round((completedSubtasks / taskSubtasks.length) * 100) : (task.progress || 0);
@@ -2644,6 +2578,14 @@
                         </span>
                     `).join('')}
                     ${taskSubtasks.length > 2 ? `<span style="font-size: 0.7rem; color: var(--gray);">+${taskSubtasks.length - 2}</span>` : ''}
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="openMissionModal(${task.id})">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                    <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" onclick="deleteTask(${task.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             `;
             
@@ -2694,7 +2636,6 @@
                 const oldStatus = tasks[taskIndex].status;
                 tasks[taskIndex].status = newStatus;
                 
-                // Se mover para concluído, marcar todas subtarefas como concluídas
                 if (newStatus === 'completed' && subtasks[taskId]) {
                     subtasks[taskId].forEach(sub => sub.completed = true);
                     tasks[taskIndex].progress = 100;
@@ -2720,19 +2661,16 @@
             return statusMap[status] || status;
         }
         
-        // ============================================
-        // FILTERS
-        // ============================================
-        function applyFilters() {
+        window.applyFilters = function() {
             loadKanbanBoard();
-        }
+        };
         
-        function clearFilters() {
+        window.clearFilters = function() {
             document.getElementById('filterPriority').value = '';
             document.getElementById('filterStatus').value = '';
             document.getElementById('filterDate').value = '';
             loadKanbanBoard();
-        }
+        };
         
         // ============================================
         // COMMENTS
@@ -2887,7 +2825,7 @@
             }
         }
         
-        function markNotificationRead(id) {
+        window.markNotificationRead = function(id) {
             const notification = notifications.find(n => n.id === id);
             if (notification) {
                 notification.read = true;
@@ -2895,15 +2833,15 @@
                 updateNotificationBadge();
                 loadNotificationsPanel();
             }
-        }
+        };
         
-        function markAllNotificationsRead() {
+        window.markAllNotificationsRead = function() {
             notifications.forEach(n => n.read = true);
             saveAllData();
             updateNotificationBadge();
             loadNotificationsPanel();
             addNotification('📬 Todas as notificações marcadas como lidas');
-        }
+        };
         
         function checkDueDates() {
             const today = new Date().toISOString().split('T')[0];
@@ -2949,7 +2887,6 @@
             
             calendarDays.innerHTML = '';
             
-            // Dias do mês anterior
             const prevMonthLastDay = new Date(year, month, 0).getDate();
             for (let i = firstDayIndex; i > 0; i--) {
                 const dayElement = document.createElement('div');
@@ -2958,7 +2895,6 @@
                 calendarDays.appendChild(dayElement);
             }
             
-            // Dias do mês atual
             for (let day = 1; day <= totalDays; day++) {
                 const dayElement = document.createElement('div');
                 dayElement.className = 'calendar-day';
@@ -2978,7 +2914,6 @@
                 addTasksToCalendar(dateStr, dayElement);
             }
             
-            // Dias do mês seguinte
             const totalCells = 42;
             const nextMonthDays = totalCells - (firstDayIndex + totalDays);
             for (let day = 1; day <= nextMonthDays; day++) {
@@ -3014,29 +2949,28 @@
             }
         }
         
-        function prevMonth() {
+        window.prevMonth = function() {
             currentMonth--;
             if (currentMonth < 0) {
                 currentMonth = 11;
                 currentYear--;
             }
             generateCalendar(currentMonth, currentYear);
-        }
+        };
         
-        function nextMonth() {
+        window.nextMonth = function() {
             currentMonth++;
             if (currentMonth > 11) {
                 currentMonth = 0;
                 currentYear++;
             }
             generateCalendar(currentMonth, currentYear);
-        }
+        };
         
         // ============================================
         // REPORTS
         // ============================================
         function updateReportsStats() {
-            // Progress by responsible
             const progressByResponsible = document.getElementById('progressByResponsible');
             if (progressByResponsible) {
                 const responsibles = [...new Set(tasks.map(t => t.responsible))];
@@ -3067,7 +3001,6 @@
                 progressByResponsible.innerHTML = progressHTML || '<p style="color: var(--gray); text-align: center;">Nenhum responsável encontrado</p>';
             }
             
-            // Tasks by priority
             const tasksByPriority = document.getElementById('tasksByPriority');
             if (tasksByPriority) {
                 const priorityCounts = {
@@ -3129,7 +3062,7 @@
         // ============================================
         // PDF GENERATION
         // ============================================
-        async function generatePDF() {
+        window.generatePDF = async function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -3185,12 +3118,9 @@
             
             doc.save(`relatorio-missoes-${new Date().toISOString().split('T')[0]}.pdf`);
             addNotification('📄 Relatório PDF gerado com sucesso');
-        }
+        };
         
-        // ============================================
-        // EXPORT TO EXCEL
-        // ============================================
-        function exportToExcel() {
+        window.exportToExcel = function() {
             const wb = XLSX.utils.book_new();
             
             const missionData = [
@@ -3237,12 +3167,9 @@
             
             XLSX.writeFile(wb, `missoes-facv-${new Date().toISOString().split('T')[0]}.xlsx`);
             addNotification('📊 Relatório Excel exportado com sucesso');
-        }
+        };
         
-        // ============================================
-        // BACKUP
-        // ============================================
-        function manualBackup() {
+        window.manualBackup = function() {
             const userDb = new UserDatabase(currentUserId);
             const backup = userDb.getAllData();
             
@@ -3258,19 +3185,15 @@
             if (backupTasksCount) backupTasksCount.textContent = tasks.length;
             
             addNotification('💾 Backup realizado com sucesso');
-        }
+        };
         
-        // Backup automático a cada 30 minutos
         setInterval(() => {
             if (currentUser) {
                 manualBackup();
             }
         }, 30 * 60 * 1000);
         
-        // ============================================
-        // EXPORT USER DATA
-        // ============================================
-        function exportUserData() {
+        window.exportUserData = function() {
             if (!currentUserId) return;
             
             const userDb = new UserDatabase(currentUserId);
@@ -3287,12 +3210,12 @@
             link.click();
             
             addNotification(`📦 Dados exportados: ${exportFileName}`);
-        }
+        };
         
         // ============================================
         // DELETE TASK
         // ============================================
-        function deleteTask(taskId) {
+        window.deleteTask = function(taskId) {
             showConfirmDialog(
                 'Confirmar Exclusão',
                 'Tem certeza que deseja excluir esta missão permanentemente?',
@@ -3315,33 +3238,28 @@
                     }
                 }
             );
-        }
+        };
         
         // ============================================
-        // MODAL FUNCTIONS
+        // MODAL FUNCTIONS - AGORA FUNCIONA PARA EDIÇÃO
         // ============================================
-        function openMissionModal(missionId = null) {
+        window.openMissionModal = function(missionId = null) {
             editingTaskId = missionId;
             
             const modalTitle = document.getElementById('modalTitle');
-            if (modalTitle) modalTitle.textContent = missionId ? 'Editar Missão' : 'Nova Missão/Tarefa';
+            modalTitle.textContent = missionId ? 'Editar Missão' : 'Nova Missão/Tarefa';
             
             const taskForm = document.getElementById('taskForm');
-            if (taskForm) taskForm.reset();
+            taskForm.reset();
             
             const progressSlider = document.getElementById('taskProgress');
             const progressValue = document.getElementById('progressValue');
-            if (progressSlider && progressValue) {
-                progressSlider.value = 0;
-                progressValue.textContent = '0%';
-            }
+            progressSlider.value = 0;
+            progressValue.textContent = '0%';
             
             const subtasksList = document.getElementById('subtasksList');
-            if (subtasksList) subtasksList.innerHTML = '';
+            subtasksList.innerHTML = '';
             subtaskCounter = 0;
-            
-            // Adicionar campo de subtarefa padrão
-            addSubtaskField();
             
             if (missionId) {
                 const task = tasks.find(t => t.id == missionId);
@@ -3353,37 +3271,36 @@
                     document.getElementById('taskResponsible').value = task.responsible || '';
                     document.getElementById('taskStatus').value = task.status || 'not-started';
                     document.getElementById('taskProgress').value = task.progress || 0;
-                    if (progressValue) progressValue.textContent = (task.progress || 0) + '%';
+                    progressValue.textContent = (task.progress || 0) + '%';
                     
                     // Carregar subtarefas existentes
-                    if (subtasks[missionId] && subtasksList) {
-                        subtasksList.innerHTML = '';
-                        subtasks[missionId].forEach(sub => {
+                    const taskSubtasks = subtasks[missionId] || [];
+                    if (taskSubtasks.length > 0) {
+                        taskSubtasks.forEach(sub => {
                             addSubtaskField(sub.description, sub.completed);
                         });
+                    } else {
+                        addSubtaskField();
                     }
                 }
             } else {
+                addSubtaskField();
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
-                const deadlineInput = document.getElementById('taskDeadline');
-                if (deadlineInput) deadlineInput.valueAsDate = tomorrow;
+                document.getElementById('taskDeadline').valueAsDate = tomorrow;
             }
             
-            const modal = document.getElementById('taskFormModal');
-            if (modal) modal.style.display = 'flex';
-        }
+            taskFormModal.style.display = 'flex';
+        };
         
-        function closeModal() {
-            const modal = document.getElementById('taskFormModal');
-            if (modal) modal.style.display = 'none';
+        window.closeModal = function() {
+            taskFormModal.style.display = 'none';
             editingTaskId = null;
-        }
+        };
         
-        function updateProgressValue(value) {
-            const progressValue = document.getElementById('progressValue');
-            if (progressValue) progressValue.textContent = value + '%';
-        }
+        window.updateProgressValue = function(value) {
+            document.getElementById('progressValue').textContent = value + '%';
+        };
         
         // ============================================
         // HELPER FUNCTIONS
@@ -3414,9 +3331,6 @@
             updateNotificationBadge();
         }
         
-        // ============================================
-        // DARK MODE
-        // ============================================
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
@@ -3431,9 +3345,6 @@
             renderChart();
         }
         
-        // ============================================
-        // FORMATTING UTILITIES
-        // ============================================
         function formatDate(date) {
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
